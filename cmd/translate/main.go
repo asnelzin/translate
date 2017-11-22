@@ -10,7 +10,7 @@ import (
 )
 
 var revision string
-var yandexAPIKey string = "trnsl.1.1.20171102T195151Z.0ed6e46b065fb5c5.5fb7f63e7f6d9bb06e348bb27093408ba9b00618"
+var yandexAPIKey = getenv("YANDEX_API_KEY")
 
 var opts struct {
 	From    string `short:"f" long:"from" description:"From language"`
@@ -18,10 +18,18 @@ var opts struct {
 	Version bool   `short:"v" long:"version" description:"Print the version information and exit"`
 
 	Positional struct {
-		Text []string `positional-arg-name:"text" required:"yes" description:"Text to translate"`
+		Text []string `positional-arg-name:"text" description:"Text to translate"`
 	} `positional-args:"yes" required:"yes"`
 }
 var parser = flags.NewParser(&opts, flags.Default)
+
+func getenv(name string) string {
+	v := os.Getenv(name)
+	if v == "" {
+		panic("missing required environment variable " + name)
+	}
+	return v
+}
 
 func main() {
 	_, err := parser.Parse()
@@ -32,6 +40,10 @@ func main() {
 	if opts.Version {
 		showVersion()
 		os.Exit(0)
+	}
+
+	if len(opts.Positional.Text) == 0 {
+		errorf("the required argument `text (at least 1 argument)` was not provided")
 	}
 
 	to, err := language.Parse(opts.To)
